@@ -1,43 +1,48 @@
 <!DOCTYPE html>
-  <html lang="tr">
-    <head>
-      <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Kod Ayırma Aracı</title>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Kod Ayırma Aracı</h1>
-                  <p>Karışık kodlarınızı otomatik olarak HTML, CSS ve JavaScript bölümlerine ayırın</p>
-                  </div>
-                  <div class="main-content">
-                    <div class="input-section">
-                      <h2>Kodunuzu Buraya Yapıştırın</h2>
-                        <textarea
-                          class="code-input"
-                          id="codeInput"
-                          placeholder="HTML, CSS ve JavaScript kodlarınızı buraya yapıştırın...
-                          Örnek:
-                          <html>
-                            <head>
-                            </head>
-                            <body>
-                            </body>
-                          </html>"
-                          >
-                        </textarea>
-                        <button class="process-btn" onclick="processCode()">
-                          Kodu Ayır ve Düzenle
-                        </button>
-                      </div>
-                      <div class="results" id="results">
-                        <div class="stats" id="stats">
-                        </div>
-                        <div id="codeOutput">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </body>
-              </html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kod Ayırma Aracı</title>
+    
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Kod Ayırma Aracı</h1>
+            <p>Karışık kodlarınızı HTML, CSS ve JavaScript dosyalarına ayırın</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2>Kodunuzu Buraya Yapıştırın</h2>
+                <textarea 
+                    class="code-input" 
+                    id="codeInput" 
+                    placeholder="HTML, CSS ve JavaScript kodlarınızı buraya yapıştırın...
+
+Örnek:<!DOCTYPE html>
+<html>
+<head>
+
+</head>
+<body>
+    <h1>Merhaba Dünya!</h1>
+    
+</body>
+</html>"
+                ></textarea>
+                <button class="process-btn" onclick="processCode()">
+                    🚀 Kodu Ayır ve Düzenle
+                </button>
+            </div>
+            
+            <div class="results" id="results">
+                <div class="stats" id="stats"></div>
+                <div id="codeOutput"></div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
