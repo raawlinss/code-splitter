@@ -1,1 +1,2 @@
-console.log('Merhaba!');
+console.log('Sayfa yüklendi!');
+
