@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kod Ayırma Aracı</title>
+    <style>
+        body {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8fafc;
+            min-height: 100vh;
+            color: #334155;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #1e293b;
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.875rem;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 8px 0 0 0;
+            opacity: 0.8;
+            font-size: 0.95rem;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .code-input {
+            width: 100%;
+            height: 200px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+        }
+
+        .process-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 12px;
+        }
+
+        .process-btn:hover {
+            background: #2563eb;
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .code-section {
+            margin-bottom: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 12px 16px;
+            font-weight: 500;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .html-header { background: #dc2626; }
+        .css-header { background: #2563eb; }
+        .js-header { background: #f59e0b; }
+
+        .copy-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .code-content {
+            background: #f8f9fa;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            border-top: 1px solid #e0e0e0;
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+        }
+
+        .stats {
+            background: #f1f5f9;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Kod Ayırma Aracı</h1>
+            <p>Karışık kodlarınızı otomatik olarak HTML, CSS ve JavaScript bölümlerine ayırın</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2>Kodunuzu Buraya Yapıştırın</h2>
+                <textarea 
+                    class="code-input" 
+                    id="codeInput" 
+                    placeholder="HTML, CSS ve JavaScript kodlarınızı buraya yapıştırın...
+
+Örnek:
+<html>
+<head>
+<style>
+body { background: blue; }
+</style>
+</head>
+<body>
+<script>
+console.log('Merhaba!');
+</script>
+</body>
+</html>"
+                ></textarea>
+                <button class="process-btn" onclick="processCode()">
+                    Kodu Ayır ve Düzenle
+                </button>
+            </div>
+            
+            <div class="results" id="results">
+                <div class="stats" id="stats"></div>
+                <div id="codeOutput"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function processCode() {
+            const input = document.getElementById('codeInput').value.trim();
+            const results = document.getElementById('results');
+            const output = document.getElementById('codeOutput');
+            const stats = document.getElementById('stats');
+            
+            if (!input) {
+                alert('Lütfen önce bir kod girin!');
+                return;
+            }
+            
+            // Kod ayırma işlemi
+            const separated = separateCode(input);
+            
+            // İstatistikleri göster
+            displayStats(separated);
+            
+            // Sonuçları göster
+            displayResults(separated);
+            
+            results.style.display = 'block';
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function separateCode(code) {
+            const result = {
+                html: '',
+                css: '',
+                javascript: '',
+                stats: {
+                    totalLines: 0,
+                    htmlLines: 0,
+                    cssLines: 0,
+                    jsLines: 0
+                }
+            };
+            
+            // Toplam satır sayısı
+            result.stats.totalLines = code.split('\n').length;
+            
+            // CSS ayırma (style tagları ve inline CSS)
+            const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+            let styleMatch;
+            while ((styleMatch = styleRegex.exec(code)) !== null) {
+                result.css += styleMatch[1].trim() + '\n\n';
+                result.stats.cssLines += styleMatch[1].split('\n').length;
+            }
+            
+            // JavaScript ayırma (script tagları)
+            const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+            let scriptMatch;
+            while ((scriptMatch = scriptRegex.exec(code)) !== null) {
+                if (!scriptMatch[0].includes('src=')) { // Sadece inline scriptler
+                    result.javascript += scriptMatch[1].trim() + '\n\n';
+                    result.stats.jsLines += scriptMatch[1].split('\n').length;
+                }
+            }
+            
+            // HTML ayırma (style ve script tagları çıkarılmış)
+            let htmlContent = code;
+            htmlContent = htmlContent.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+            htmlContent = htmlContent.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+            
+            // Boş satırları temizle ve düzenle
+            htmlContent = htmlContent.replace(/\n\s*\n\s*\n/g, '\n\n');
+            result.html = htmlContent.trim();
+            result.stats.htmlLines = result.html.split('\n').length;
+            
+            // Sadece HTML, CSS ve JavaScript işleniyor
+            
+            // CSS'i güzelleştir
+            if (result.css) {
+                result.css = beautifyCSS(result.css);
+            }
+            
+            // JavaScript'i güzelleştir
+            if (result.javascript) {
+                result.javascript = beautifyJS(result.javascript);
+            }
+            
+            // HTML'i güzelleştir
+            if (result.html) {
+                result.html = beautifyHTML(result.html);
+            }
+            
+            return result;
+        }
+        
+        // Diğer dosya türleri kaldırıldı - sadece HTML, CSS, JS
+        
+        function beautifyCSS(css) {
+            return css
+                .replace(/\{/g, ' {\n  ')
+                .replace(/\}/g, '\n}\n')
+                .replace(/;/g, ';\n  ')
+                .replace(/,/g, ',\n')
+                .replace(/\n\s*\n/g, '\n')
+                .trim();
+        }
+        
+        function beautifyJS(js) {
+            return js
+                .replace(/\{/g, ' {\n  ')
+                .replace(/\}/g, '\n}\n')
+                .replace(/;/g, ';\n')
+                .replace(/,/g, ', ')
+                .trim();
+        }
+        
+        function beautifyHTML(html) {
+            let formatted = html;
+            let indent = 0;
+            const tab = '  ';
+            
+            formatted = formatted.replace(/></g, '>\n<');
+            
+            const lines = formatted.split('\n');
+            const result = [];
+            
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+                
+                if (trimmed.startsWith('</')) {
+                    indent = Math.max(0, indent - 1);
+                }
+                
+                result.push(tab.repeat(indent) + trimmed);
+                
+                if (trimmed.startsWith('<') && !trimmed.startsWith('</') && !trimmed.endsWith('/>')) {
+                    indent++;
+                }
+            });
+            
+            return result.join('\n');
+        }
+        
+        function displayStats(separated) {
+            const stats = document.getElementById('stats');
+            const { totalLines, htmlLines, cssLines, jsLines } = separated.stats;
+            
+            stats.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-number">${totalLines}</div>
+                    <div class="stat-label">Toplam Satır</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${htmlLines}</div>
+                    <div class="stat-label">HTML Satırı</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${cssLines}</div>
+                    <div class="stat-label">CSS Satırı</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${jsLines}</div>
+                    <div class="stat-label">JavaScript Satırı</div>
+                </div>
+            `;
+        }
+        
+        function displayResults(separated) {
+            const output = document.getElementById('codeOutput');
+            let html = '';
+            
+            // HTML bölümü
+            if (separated.html) {
+                html += createCodeSection('HTML', separated.html, 'html-header');
+            }
+            
+            // CSS bölümü
+            if (separated.css) {
+                html += createCodeSection('CSS', separated.css, 'css-header');
+            }
+            
+            // JavaScript bölümü
+            if (separated.javascript) {
+                html += createCodeSection('JavaScript', separated.javascript, 'js-header');
+            }
+            
+            // Sadece HTML, CSS ve JavaScript gösteriliyor
+            
+            if (!html) {
+                html = `
+                    <div class="empty-state">
+                        <i>🤔</i>
+                        <h3>Kod bulunamadı</h3>
+                        <p>Lütfen geçerli bir HTML, CSS veya JavaScript kodu girin.</p>
+                    </div>
+                `;
+            }
+            
+            output.innerHTML = html;
+        }
+        
+        function createCodeSection(title, content, headerClass) {
+            const sectionId = title.toLowerCase().replace(/\s+/g, '-');
+            // HTML karakterlerini escape et
+            const escapedContent = content
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            
+            return `
+                <div class="code-section">
+                    <div class="section-header ${headerClass}">
+                        <span>${title}</span>
+                        <button class="copy-btn" onclick="copyToClipboard('${sectionId}', this)">
+                            Kopyala
+                        </button>
+                    </div>
+                    <div class="code-content" id="${sectionId}">${escapedContent}</div>
+                </div>
+            `;
+        }
+        
+        function copyToClipboard(elementId, btnElement) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopySuccess(btnElement);
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(text, btnElement);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text, btnElement);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text, btnElement) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess(btnElement);
+                } else {
+                    alert('Kopyalama başarısız oldu. Lütfen manuel olarak seçip kopyalayın.');
+                }
+            } catch (err) {
+                alert('Kopyalama başarısız oldu. Lütfen manuel olarak seçip kopyalayın.');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopySuccess(btnElement) {
+            const originalText = btnElement.textContent;
+            btnElement.textContent = '✓ Kopyalandı';
+            btnElement.style.background = 'rgba(34, 197, 94, 0.3)';
+            
+            setTimeout(() => {
+                btnElement.textContent = originalText;
+                btnElement.style.background = 'rgba(255,255,255,0.15)';
+            }, 2000);
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9863042832bc9927',t:'MTc1OTA2MDE1My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
