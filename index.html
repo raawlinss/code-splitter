@@ -4,47 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kod Ayırma Aracı</title>
-    
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🔧 Kod Ayırma Aracı</h1>
-            <p>Karışık kodlarınızı HTML, CSS ve JavaScript dosyalarına ayırın</p>
-        </div>
-        
-        <div class="main-content">
-            <div class="input-section">
-                <h2>Kodunuzu Buraya Yapıştırın</h2>
-                <textarea 
-                    class="code-input" 
-                    id="codeInput" 
-                    placeholder="HTML, CSS ve JavaScript kodlarınızı buraya yapıştırın...
-
-Örnek:<!DOCTYPE html>
-<html>
-<head>
-
-</head>
-<body>
-    <h1>Merhaba Dünya!</h1>
-    
-</body>
-</html>"
-                ></textarea>
-                <button class="process-btn" onclick="processCode()">
-                    🚀 Kodu Ayır ve Düzenle
-                </button>
-            </div>
-            
-            <div class="results" id="results">
-                <div class="stats" id="stats"></div>
-                <div id="codeOutput"></div>
-            </div>
-        </div>
-    </div>
-
-body {
+    <style>
+        body {
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
@@ -279,13 +240,251 @@ body {
                 grid-template-columns: 1fr;
             }
         }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Kod Ayırma Aracı</h1>
+            <p>Karışık kodlarınızı HTML, CSS ve JavaScript dosyalarına ayırın</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <h2>Kodunuzu Buraya Yapıştırın</h2>
+                <textarea 
+                    class="code-input" 
+                    id="codeInput" 
+                    placeholder="HTML, CSS ve JavaScript kodlarınızı buraya yapıştırın...
 
+Örnek:<!DOCTYPE html>
+<html>
+<head>
+<style>
 body { 
     background: #f0f0f0; 
     font-family: Arial;
 }
-
-
-<script src="script.js"></script>
+</style>
+</head>
+<body>
+    <h1>Merhaba Dünya!</h1>
+    <script>
+        console.log('Sayfa yüklendi!');
+    </script>
 </body>
+</html>"
+                ></textarea>
+                <button class="process-btn" onclick="processCode()">
+                    🚀 Kodu Ayır ve Düzenle
+                </button>
+            </div>
+            
+            <div class="results" id="results">
+                <div class="stats" id="stats"></div>
+                <div id="codeOutput"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function processCode() {
+            const input = document.getElementById('codeInput').value.trim();
+            
+            if (!input) {
+                alert('⚠️ Lütfen önce bir kod girin!');
+                return;
+            }
+            
+            const separated = separateCode(input);
+            displayStats(separated);
+            displayResults(separated);
+            
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function separateCode(code) {
+            const result = {
+                html: '',
+                css: '',
+                javascript: '',
+                stats: { totalLines: 0, htmlLines: 0, cssLines: 0, jsLines: 0 }
+            };
+            
+            result.stats.totalLines = code.split('\n').length;
+            
+            // CSS ayırma
+            const styleMatches = code.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+            if (styleMatches) {
+                styleMatches.forEach(match => {
+                    const cssContent = match.replace(/<\/?style[^>]*>/gi, '').trim();
+                    if (cssContent) {
+                        result.css += cssContent + '\n\n';
+                        result.stats.cssLines += cssContent.split('\n').length;
+                    }
+                });
+            }
+            
+            // JavaScript ayırma
+            const scriptMatches = code.match(/<script[^>]*>([\s\S]*?)<\/script>/gi);
+            if (scriptMatches) {
+                scriptMatches.forEach(match => {
+                    if (!match.includes('src=')) {
+                        const jsContent = match.replace(/<\/?script[^>]*>/gi, '').trim();
+                        if (jsContent) {
+                            result.javascript += jsContent + '\n\n';
+                            result.stats.jsLines += jsContent.split('\n').length;
+                        }
+                    }
+                });
+            }
+            
+            // HTML ayırma
+            let htmlContent = code;
+            htmlContent = htmlContent.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+            htmlContent = htmlContent.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+            htmlContent = htmlContent.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+            
+            if (htmlContent) {
+                result.html = htmlContent;
+                result.stats.htmlLines = htmlContent.split('\n').length;
+            }
+            
+            return result;
+        }
+        
+        function displayStats(separated) {
+            const stats = document.getElementById('stats');
+            const { totalLines, htmlLines, cssLines, jsLines } = separated.stats;
+            
+            stats.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-number">${totalLines}</div>
+                    <div class="stat-label">📄 Toplam Satır</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${htmlLines}</div>
+                    <div class="stat-label">🏗️ HTML Satırı</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${cssLines}</div>
+                    <div class="stat-label">🎨 CSS Satırı</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${jsLines}</div>
+                    <div class="stat-label">⚡ JavaScript Satırı</div>
+                </div>
+            `;
+        }
+        
+        function displayResults(separated) {
+            const output = document.getElementById('codeOutput');
+            let html = '';
+            
+            if (separated.html) {
+                html += createCodeSection('HTML', separated.html, 'html-header', 'index.html');
+            }
+            
+            if (separated.css) {
+                html += createCodeSection('CSS', separated.css, 'css-header', 'style.css');
+            }
+            
+            if (separated.javascript) {
+                html += createCodeSection('JavaScript', separated.javascript, 'js-header', 'script.js');
+            }
+            
+            if (!html) {
+                html = `
+                    <div class="empty-state">
+                        <span class="icon">🤔</span>
+                        <h3>Kod bulunamadı</h3>
+                        <p>Lütfen geçerli bir HTML, CSS veya JavaScript kodu girin.</p>
+                    </div>
+                `;
+            }
+            
+            output.innerHTML = html;
+        }
+        
+        function createCodeSection(title, content, headerClass, fileName) {
+            const sectionId = title.toLowerCase();
+            
+            // HTML karakterlerini escape et ama formatı koru
+            const escapedContent = content
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            
+            return `
+                <div class="code-section">
+                    <div class="section-header ${headerClass}">
+                        <div class="file-info">
+                            <span>${title}</span>
+                            <div class="file-name">📁 ${fileName}</div>
+                        </div>
+                        <button class="copy-btn" onclick="copyToClipboard('${sectionId}', this)">
+                            Kopyala
+                        </button>
+                    </div>
+                    <div class="code-content" id="${sectionId}">${escapedContent}</div>
+                </div>
+            `;
+        }
+        
+        function copyToClipboard(elementId, btnElement) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            // Modern tarayıcılar için
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopySuccess(btnElement);
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(text, btnElement);
+                });
+            } else {
+                // Eski tarayıcılar için fallback
+                fallbackCopyTextToClipboard(text, btnElement);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text, btnElement) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess(btnElement);
+                } else {
+                    alert('Kopyalama başarısız oldu. Lütfen manuel olarak seçip kopyalayın.');
+                }
+            } catch (err) {
+                alert('Kopyalama başarısız oldu. Lütfen manuel olarak seçip kopyalayın.');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopySuccess(btnElement) {
+            const originalText = btnElement.innerHTML;
+            btnElement.innerHTML = '✅ Kopyalandı';
+            btnElement.style.background = 'rgba(46, 204, 113, 0.3)';
+            
+            setTimeout(() => {
+                btnElement.innerHTML = originalText;
+                btnElement.style.background = 'rgba(255,255,255,0.2)';
+            }, 2000);
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9863223a67fc8a33',t:'MTc1OTA2MTM4NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
