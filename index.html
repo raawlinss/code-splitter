@@ -309,54 +309,111 @@ body {
                 html: '',
                 css: '',
                 javascript: '',
-                stats: { totalLines: 0, htmlLines: 0, cssLines: 0, jsLines: 0 }
+                inlineCSS: '',
+                eventHandlers: '',
+                externalFiles: '',
+                stats: { 
+                    totalLines: 0, 
+                    htmlLines: 0, 
+                    cssLines: 0, 
+                    jsLines: 0,
+                    inlineCSSLines: 0,
+                    eventLines: 0
+                }
             };
             
             result.stats.totalLines = code.split('\n').length;
             
-            // CSS ayırma
+            // 1. CSS AYIRMA - <style> tagları içindeki CSS'ler
             const styleMatches = code.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
             if (styleMatches) {
-                styleMatches.forEach(match => {
+                styleMatches.forEach((match, index) => {
                     const cssContent = match.replace(/<\/?style[^>]*>/gi, '').trim();
                     if (cssContent) {
-                        result.css += cssContent + '\n\n';
+                        result.css += `/* Style Block ${index + 1} */\n${cssContent}\n\n`;
                         result.stats.cssLines += cssContent.split('\n').length;
                     }
                 });
             }
             
-            // JavaScript ayırma
+            // 2. INLINE CSS AYIRMA - style="" attribute'ları
+            const inlineStyleMatches = code.match(/style\s*=\s*["'][^"']*["']/gi);
+            if (inlineStyleMatches) {
+                const uniqueStyles = [...new Set(inlineStyleMatches)];
+                uniqueStyles.forEach((match, index) => {
+                    const styleContent = match.replace(/style\s*=\s*["']([^"']*)["']/i, '$1').trim();
+                    if (styleContent) {
+                        result.inlineCSS += `/* Inline Style ${index + 1} */\n.inline-style-${index + 1} {\n    ${styleContent.replace(/;\s*/g, ';\n    ')}\n}\n\n`;
+                        result.stats.inlineCSSLines += styleContent.split(';').length;
+                    }
+                });
+            }
+            
+            // 3. JAVASCRIPT AYIRMA - <script> tagları içindeki JS
             const scriptMatches = code.match(/<script[^>]*>([\s\S]*?)<\/script>/gi);
             if (scriptMatches) {
-                scriptMatches.forEach(match => {
+                scriptMatches.forEach((match, index) => {
                     if (!match.includes('src=')) {
                         const jsContent = match.replace(/<\/?script[^>]*>/gi, '').trim();
                         if (jsContent) {
-                            result.javascript += jsContent + '\n\n';
+                            result.javascript += `// Script Block ${index + 1}\n${jsContent}\n\n`;
                             result.stats.jsLines += jsContent.split('\n').length;
                         }
                     }
                 });
             }
             
-            // HTML ayırma
-            let htmlContent = code;
-            htmlContent = htmlContent.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-            htmlContent = htmlContent.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-            htmlContent = htmlContent.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
-            
-            if (htmlContent) {
-                result.html = htmlContent;
-                result.stats.htmlLines = htmlContent.split('\n').length;
+            // 4. EVENT HANDLER AYIRMA - onclick, onload, vs.
+            const eventHandlers = code.match(/on\w+\s*=\s*["'][^"']*["']/gi);
+            if (eventHandlers) {
+                const uniqueEvents = [...new Set(eventHandlers)];
+                uniqueEvents.forEach((match, index) => {
+                    const eventName = match.match(/on(\w+)/i)[1];
+                    const eventCode = match.replace(/on\w+\s*=\s*["']([^"']*)["']/i, '$1').trim();
+                    if (eventCode) {
+                        result.eventHandlers += `// ${eventName.toUpperCase()} Event Handler ${index + 1}\nfunction handle${eventName.charAt(0).toUpperCase() + eventName.slice(1)}${index + 1}() {\n    ${eventCode}\n}\n\n`;
+                        result.stats.eventLines += 3;
+                    }
+                });
             }
+            
+            // 5. EXTERNAL FILES AYIRMA - src ve href linkleri
+            const externalLinks = [];
+            const srcMatches = code.match(/src\s*=\s*["'][^"']*["']/gi);
+            const hrefMatches = code.match(/href\s*=\s*["'][^"']*["']/gi);
+            
+            if (srcMatches) {
+                srcMatches.forEach(match => {
+                    const src = match.replace(/src\s*=\s*["']([^"']*)["']/i, '$1');
+                    if (src && !src.startsWith('data:') && !src.startsWith('#')) {
+                        externalLinks.push(`Script: ${src}`);
+                    }
+                });
+            }
+            
+            if (hrefMatches) {
+                hrefMatches.forEach(match => {
+                    const href = match.replace(/href\s*=\s*["']([^"']*)["']/i, '$1');
+                    if (href && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+                        externalLinks.push(`Stylesheet: ${href}`);
+                    }
+                });
+            }
+            
+            if (externalLinks.length > 0) {
+                result.externalFiles = `/* External Files Referenced */\n${externalLinks.map(link => `// ${link}`).join('\n')}\n\n/* Download these files separately */`;
+            }
+            
+            // 6. HTML AYIRMA - Temiz HTML yapısı (hiçbir şey silinmez, sadece referanslar eklenir)
+            result.html = code.trim();
+            result.stats.htmlLines = result.html.split('\n').length;
             
             return result;
         }
         
         function displayStats(separated) {
             const stats = document.getElementById('stats');
-            const { totalLines, htmlLines, cssLines, jsLines } = separated.stats;
+            const { totalLines, htmlLines, cssLines, jsLines, inlineCSSLines, eventLines } = separated.stats;
             
             stats.innerHTML = `
                 <div class="stat-item">
@@ -368,11 +425,11 @@ body {
                     <div class="stat-label">🏗️ HTML Satırı</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-number">${cssLines}</div>
+                    <div class="stat-number">${cssLines + inlineCSSLines}</div>
                     <div class="stat-label">🎨 CSS Satırı</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-number">${jsLines}</div>
+                    <div class="stat-number">${jsLines + eventLines}</div>
                     <div class="stat-label">⚡ JavaScript Satırı</div>
                 </div>
             `;
@@ -382,16 +439,34 @@ body {
             const output = document.getElementById('codeOutput');
             let html = '';
             
+            // HTML bölümü - her zaman göster
             if (separated.html) {
-                html += createCodeSection('HTML', separated.html, 'html-header', 'index.html');
+                html += createCodeSection('HTML (Orijinal Kod)', separated.html, 'html-header', 'index.html');
             }
             
+            // CSS bölümü - <style> tagları
             if (separated.css) {
-                html += createCodeSection('CSS', separated.css, 'css-header', 'style.css');
+                html += createCodeSection('CSS (Style Tagları)', separated.css, 'css-header', 'styles.css');
             }
             
+            // Inline CSS bölümü
+            if (separated.inlineCSS) {
+                html += createCodeSection('Inline CSS (Style Attributeları)', separated.inlineCSS, 'css-header', 'inline-styles.css');
+            }
+            
+            // JavaScript bölümü - <script> tagları
             if (separated.javascript) {
-                html += createCodeSection('JavaScript', separated.javascript, 'js-header', 'script.js');
+                html += createCodeSection('JavaScript (Script Tagları)', separated.javascript, 'js-header', 'scripts.js');
+            }
+            
+            // Event Handlers bölümü
+            if (separated.eventHandlers) {
+                html += createCodeSection('Event Handlers (onclick, onload, vs.)', separated.eventHandlers, 'js-header', 'event-handlers.js');
+            }
+            
+            // External Files bölümü
+            if (separated.externalFiles) {
+                html += createCodeSection('External Files (Dış Dosya Referansları)', separated.externalFiles, 'html-header', 'external-files.txt');
             }
             
             if (!html) {
@@ -486,5 +561,5 @@ body {
             }, 2000);
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9863223a67fc8a33',t:'MTc1OTA2MTM4NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9863368ef55e09af',t:'MTc1OTA2MjIxOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
